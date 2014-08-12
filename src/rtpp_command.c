@@ -206,9 +206,23 @@ reply_port(struct cfg *cf, struct rtpp_command *cmd,
 
     if (lia == NULL || lia[0] == NULL || ishostnull(lia[0]))
 	len = snprintf(cmd->buf_t, sizeof(cmd->buf_t), "%d\n", lport);
-    else
-	len = snprintf(cmd->buf_t, sizeof(cmd->buf_t), "%d %s%s\n", lport,
-          addr2char(lia[0]), (lia[0]->sa_family == AF_INET) ? "" : " 6");
+    else {
+        if (cf->stable.advaddr[0] != NULL) {
+            if (cf->stable.bmode != 0 && cf->stable.advaddr[1] != NULL
+              && lia[0] == cf->stable.bindaddr[1]) {
+                len += sprintf(cmd->buf_t, sizeof(cmd->buf_t), "%d %s%s\n",
+                  lport, cf->stable.advaddr[1],
+                  (lia[0]->sa_family == AF_INET) ? "" : " 6");
+            } else {
+                len += sprintf(cmd->buf_t, sizeof(cmd->buf_t), "%d %s%s\n",
+                  lport, cf->stable.advaddr[0],
+                  (lia[0]->sa_family == AF_INET) ? "" : " 6");
+            }
+        } else {
+            len += snprintf(cmd->buf_t, sizeof(cmd->buf_t), "%d %s%s\n", lport,
+              addr2char(lia[0]), (lia[0]->sa_family == AF_INET) ? "" : " 6");
+        }
+    }
     doreply(cf, cmd->buf_t, len, cmd);
 }
 
